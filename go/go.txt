@@ -1,0 +1,310 @@
+# Variables
+
+var empty string    // shortway     empty := "" 
+
+const premiumPlanName = "Premium Plan"      // const will not change
+const firstName = "Lane"
+const lastName = "Wagner"
+const fullName = firstName + " " + lastName     // const still valid if computed at compile time 
+
+averageOpenRate, displayMessage := .23, "is the average open rate of your messages" // same line
+
+accountAge := 2.6
+accountAgeInt := int(accountAge) // double to int
+
+/// recommend type
+bool    string      float64         
+uint32  (0 to 4,294,967,295)    
+byte    (0 to 255 )
+int     (-9,223,372,036,854,775,808 to 9,223,372,036,854,775,807)     
+rune    (U+0000 to U+10FFFF)
+/// rune note 
+rune(1st letter string)	// valid
+rune(97) -> rune 'a'	// valid
+for _, r := range "Привет" {
+  fmt.Println(r) // Output: 1055 1088 1080 1073 1072 1085
+}
+
+/// conditionals
+if (condition) {
+	fmt.Println("Message sent")
+} else {
+	fmt.Println("Message not sent")
+}
+
+/// functions
+func concat(s1 string, s2 string) string { return s1 + s2 }		// string is return type, can be empty 
+func concat(s1,s2 string) string { return s1 + s2 }		// same type of arguments
+func increment(x int) { x++ }	// value in function just copy of value, so after call x is not increase outside function
+func getNames() (string, string) { return "John", "Doe" }  firstName, _ := getNames()	// ignore with _ for avoid non used var
+func getCoords() (x, y int) { return }	//  return x,y
+func calculator(a, b int) (mul, div int, err error) { return mul, div, nil }	// with named return value make code easy read than just return type (int, int, error)
+chain function example (read go2.txt 118 -> 133)
+
+/// Struct
+type messageToSend struct {
+	message   string
+	sender    user
+	recipient user
+}
+type user struct {
+	name   string
+	number int
+}
+messageToSend{message: "you have an appointment tommorow", sender: user{name:"Brenda Halafax", number: 16545550987,}, recipient: user{name:"Sally Sue", number: 19035558973,},}
+
+/// Anonymous  Struct
+type car struct {
+	Make   string
+	Model  string
+	Height int
+	Width  int
+	// Wheel is a field containing an anonymous struct
+	Wheel struct {
+		Radius   int
+		Material string
+	}
+}
+myCar := car{
+	Make:   "Toyota",
+	Model:  "Corolla",
+	Height: 150,
+	Width:  200,
+	Wheel: struct{ Radius int; Material string }{Radius: 17, Material: "Alloy"},
+}
+
+/// Ember Struct
+type sender struct {
+	rateLimit int
+	user
+}
+type user struct {
+	name   string
+	number int
+}
+
+/// Mothods Struct
+type AuthenticationInfo struct {
+	username string
+	password string
+}
+func (authInfo AuthenticationInfo) getBasicAuth() string {
+	return "Authorization: Basic " + authInfo.username + ":" + authInfo.password
+}
+fmt.Println(authInfo.getBasicAuth())
+
+/// Interface
+type Shape interface {
+	Area() float64
+}
+type Circle struct {
+	Radius float64
+}
+func (c Circle) Area() float64 { return math.Pi * c.Radius * c.Radius }	// Implemented interface Shape when define function Area() float64
+
+/// Multi Interface
+type Messenger interface {
+	SendMessage() string
+}
+type Caller interface {
+	Call() string
+}
+type Phone struct {
+	Brand string
+}
+func (p Phone) SendMessage() string {
+	return fmt.Sprintf("Sending a message from %s", p.Brand)
+}
+func (p Phone) Call() string {
+	return fmt.Sprintf("Calling from %s", p.Brand)
+}
+
+/// Named Arguments for easy read (this not required same named arguments when implemented)
+type Copier interface {
+  Copy(sourceFile string, destinationFile string) (bytesCopied int)
+}
+
+/// Type Assertion for if else and switch
+type Expense interface {
+    cost() float64
+}
+type Email struct {
+    toAddress string
+}
+func (e Email) cost() float64 {
+    return 10.0 // Just an arbitrary cost for demonstration
+} 
+func getExpenseReport(exp Expense) (string, float64) {
+	// Assertion Expense is email for if else
+    if em, ok := exp.(Email); ok {		
+        return em.toAddress, em.cost()
+    }
+	return "", 0.0
+
+	// Assertion Expense is email for switch
+	switch v := exp.(type) {
+	case email:
+		return v.toAddress, v.cost()
+s	default:
+		return "", 0.0
+	}
+}
+
+/// Error
+fmt.Errorf("can't send texts over %v characters", 25)
+func divide(x, y float64) (float64, error) {
+	if y == 0 { return 0, errors.New("no dividing by 0") }	// need import errors package
+	return x / y, nil
+}
+
+///  Loop
+for i := 0; i < numMessages; i++ {	}
+for i := 0; ; i++ { if(i = 10) return }
+for plantHeight < 5 { plantHeight++ }	// while
+for i := 0; i < 10; i++ {	// Exit the loop
+  if i == 5 { break }
+  fmt.Println(i)
+}
+for i := 0; i < 10; i++ {
+  if i % 2 == 0 { continue  }	// Continue stop and go to next iteration, use as "guard clause" pattern within loops
+  fmt.Println(i)
+}
+
+/// Arrays
+var myInts [10]int
+primes := [6]int{2, 3, 5, 7, 11, 13}
+
+/// Slice
+mySlice := primes[1:4]
+mySlice := make([]int, 5, 10)	// 5 is init length, 10 is capacity of length and can empty
+len(mySlice)		cap(mySlice)	// count length and capacity of slice
+func sum(nums ...float64) { }	// variadic function
+sum(1.0, 2.0, 3.0) or nums := []float64{1.0, 2.0, 3.0} 	sum(nums...)
+nums = append(nums, 4.0)	// add to slice
+j := append([]int{}, i...) // Create a copy of before appending because it overdrive same time j,g because same underlying array
+g := append([]int{}, i...)
+fruits := []string{"apple", "banana", "grape"}	// range (like for each)
+for i, fruit := range fruits {
+    fmt.Println(i, fruit)
+}
+
+/// Map
+ages = map[string]int{
+  "John": 37,
+  "Mary": 24,
+}
+ages["Mary"] = 21 // overwrites 24
+var user,found = ages["Mary"]	// found return true if key exist
+
+map[string]map[string]int (example of this: go2.txt 22 -> 54, Nested map example: 1-> 116) // Nested map 
+
+/// Higher Function (Function in Function arguments)
+func add(x, y int) int { return x + y }
+func aggregate(a, b, c int, arithmetic func(int, int) int) int { return arithmetic(arithmetic(a, b), c) }
+aggregate(2,3,4, add)
+
+/// Currying
+func add(x, y int) int { return x + y }
+func multiply(x, y int) int {  return x * y }
+func selfMath(mathFunc func(int, int) int) func (int) int {
+  return func(x int) int {
+    return mathFunc(x, x)
+  }
+}
+// Create a new function that squares/double its argument
+squareFunc := selfMath(multiply)
+doubleFunc := selfMath(add)
+// Call the 2 function with an argument
+fmt.Println(square(5)) // Output: 25
+fmt.Println(doubleFunc(5))	// Output: 10
+defer src.Close()	// Used to excute something after function returns
+
+/// Closure
+func adder() func(int) int {
+	sum := 0
+	return func(value int) int {
+		sum += value
+		return sum
+	}
+}
+add := adder()
+add(2)
+add(3)
+fmt.Println("Current sum:", add(4))		// need not affect value to get current value
+
+/// Anonymous Function
+func doMath(f func(int) int, nums []int) []int {
+	var results []int
+	for _, n := range nums {
+		results = append(results, f(n))
+	}
+	return results
+}
+nums := []int{1, 2, 3, 4, 5}
+allNumsDoubled := doMath(func(x int) int { return x + x }, nums)	// [2 4 6 8 10]
+
+/// Pointer
+******** CHECK NIL CAREFUL BEFORE USE POINTER *********	// read "default value (avoid err in pointer).pdf"
+
+func modifyVariable(i *int) {
+  *i = *i + 10 // Modifies original value through pointer
+}
+var originalValue int = 5
+modifyVariable(&originalValue)	// originalValue = 15
+
+// Pointer receiver
+type car struct { color string }
+func (c *car) setColor(color string) { c.color = color }
+c := car{ color: "white",}
+c.setColor("blue")
+
+/// Comanand
+go mod init example.com/vemines/{project-name}
+go build 	-> 	file locate at this folder
+go install 	-> 	file locate bin folder of go (Check Go path)
+
+/// Chanels
+func addEmailsToQueue(emails []string) chan string {
+	emailsToSend := make(chan string, len(emails))
+	for _, email := range emails {
+		emailsToSend <- email					// add data to chanel
+	}
+	return emailsToSend
+}
+func sendEmails(batchSize int, ch chan string) {
+	for i := 0; i < batchSize; i++ {
+		email := <-ch							// get data from chanel
+		fmt.Println("Sending email:", email)
+	}
+}
+close(ch) // Sending signal success, Preventing error, Relaese memory
+for v := range ch { fmt.Println(v) }
+func test() {
+	snapshotTicker := time.Tick(800 * time.Millisecond)
+	saveAfter := time.After(2800 * time.Millisecond)
+	saveBackups(snapshotTicker, saveAfter)
+	fmt.Println("===========================")
+}
+func saveBackups(snapshotTicker, saveAfter <-chan time.Time) {
+	for {
+		select {
+		case <-snapshotTicker:
+			takeSnapshot()
+		case <-saveAfter:
+			saveSnapshot()
+			return
+		default:
+			waitForData()
+			time.Sleep(500 * time.Millisecond)
+		}
+	}
+}
+
+/// Mutex example in go2.txt 136 -> 233
+
+/// Generic
+func splitAnySlice[T any](s []T) ([]T, []T) {		// "any" could replace interface for call function
+    mid := len(s)/2
+    return s[:mid], s[mid:]
+}
+generic 2 interface (go2.txt 235-> 335)

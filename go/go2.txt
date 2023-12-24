@@ -1,0 +1,335 @@
+//// Example in go tour slice string to nested map (map[rune]map[string]int) ////
+
+func getNameCounts(names []string) map[rune]map[string]int {
+	nameCounts := make(map[rune]map[string]int)
+	for _, name := range names {
+		firstLetter := rune(0)
+		if len(name) != 0 {
+			firstLetter = rune(name[0])
+		}
+
+		if _, ok := nameCounts[firstLetter]; !ok {
+			nameCounts[firstLetter] = make(map[string]int)
+		}
+		if _, ok := nameCounts[firstLetter][name]; !ok {
+			nameCounts[firstLetter][name] = 0
+		}
+		nameCounts[firstLetter][name]++
+	}
+	return nameCounts
+}
+
+//// Example of map[string]map[string]int ////
+
+// Create a map of employee salaries by department and name
+employeeSalaries := make(map[string]map[string]int)
+
+// Add salaries for employees in the Marketing department
+employeeSalaries["Marketing"] = map[string]int{
+    "John Doe":   100000,
+    "Jane Doe":  95000,
+    "Mike Smith": 110000,
+}
+
+// Add salaries for employees in the Engineering department
+employeeSalaries["Engineering"] = map[string]int{
+    "Alice Smith": 120000,
+    "Bob Brown":   115000,
+    "Charlie Lee": 105000,
+}
+
+// Access salary of John Doe in Marketing department
+marketingSalary := employeeSalaries["Marketing"]["John Doe"]
+fmt.Println(marketingSalary) // Output: 100000
+
+// Access salary of Alice Smith in Engineering department
+engineeringSalary := employeeSalaries["Engineering"]["Alice Smith"]
+fmt.Println(engineeringSalary) // Output: 120000
+
+// Update salary of Mike Smith in Marketing department
+employeeSalaries["Marketing"]["Mike Smith"] = 120000
+
+// Check updated salary of Mike Smith
+updatedSalary := employeeSalaries["Marketing"]["Mike Smith"]
+fmt.Println(updatedSalary) // Output: 120000
+
+//// Map nested example 1 ////
+
+type User struct {
+    Name string `json:"name"`
+    Age int `json:"age"`
+}
+
+type UsersByCity map[string]map[string]User
+
+// Create a map of users by city and name
+usersByCity := make(UsersByCity)
+
+// JSON representation:
+// {
+//   "New York": {
+//     "john.doe": {
+//       "name": "John Doe",
+//       "age": 30
+//     }
+//   }
+// }
+
+// Add a user to the map
+user := User{Name: "John Doe", Age: 30}
+usersByCity["New York"]["john.doe"] = user
+
+// Access a user by city and name
+userFromNY := usersByCity["New York"]["john.doe"]
+fmt.Println(userFromNY.Name) // Output: John Doe
+
+//// Map nested example 2 ////
+
+type Product struct {
+    Name string `json:"name"`
+    Price float64 `json:"price"`
+}
+
+type ProductsByCategory map[string]map[string][]Product
+
+// JSON representation:
+// {
+//   "Clothing": {
+//     "T-Shirts": [
+//       {
+//         "name": "T-Shirt",
+//         "price": 19.99
+//       }
+//     ]
+//   }
+// }
+
+// Create a map of products by category and subcategory
+productsByCategory := make(ProductsByCategory)
+
+// Add a product to the map
+product := Product{Name: "T-Shirt", Price: 19.99}
+productsByCategory["Clothing"]["T-Shirts"].append(product)
+
+// Access a product by category and subcategory
+tshirt := productsByCategory["Clothing"]["T-Shirts"][0]
+fmt.Println(tshirt.Name) // Output: T-Shirt
+
+//// Example for Chain function ////
+
+func add(x int) func(int) int {
+	return func(y int) int { return x + y }
+}
+
+func add3(x int) func(int) func(int) int {
+  return func(y int) func(int) int {
+    return func(z int) int {
+      return x + y + z
+    }
+  }
+}
+
+result := add(5)(2)
+result := add3(5)(2)(3)
+
+
+//// Example for Mutex ////
+type safeCounter struct {
+	counts map[string]int
+	mux    *sync.RWMutex
+}
+
+func (sc safeCounter) inc(key string) {
+	sc.mux.Lock()
+	defer sc.mux.Unlock()
+	sc.slowIncrement(key)
+}
+
+func (sc safeCounter) val(key string) int {
+	sc.mux.RLock()			// should use RLock for read
+	defer sc.mux.RUnlock()
+	return sc.counts[key]
+}
+
+func (sc safeCounter) slowIncrement(key string) {
+	tempCounter := sc.counts[key]
+	time.Sleep(time.Microsecond)
+	tempCounter++
+	sc.counts[key] = tempCounter
+}
+
+type emailTest struct {
+	email string
+	count int
+}
+
+func test(sc safeCounter, emailTests []emailTest) {
+	emails := make(map[string]struct{})
+
+	var wg sync.WaitGroup
+	for _, emailT := range emailTests {
+		emails[emailT.email] = struct{}{}
+		for i := 0; i < emailT.count; i++ {		// count increase one by one
+			wg.Add(1)
+			go func(emailT emailTest) {
+				sc.inc(emailT.email)
+				wg.Done()
+			}(emailT)
+		}
+	}
+	wg.Wait()
+
+	emailsSorted := make([]string, 0, len(emails))
+	for email := range emails {
+		emailsSorted = append(emailsSorted, email)
+	}
+	sort.Strings(emailsSorted)
+
+	for _, email := range emailsSorted {
+		fmt.Printf("Email: %s has %d emails\n", email, sc.val(email))
+	}
+	fmt.Println("=====================================")
+}
+// calling
+sc := safeCounter{
+	counts: make(map[string]int),
+	mux:    &sync.RWMutex{},
+}
+test(sc, []emailTest{
+	{
+		email: "john@example.com",
+		count: 23,
+	},
+	{
+		email: "john@example.com",
+		count: 29,
+	},
+	{
+		email: "jill@example.com",
+		count: 31,
+	},
+	{
+		email: "jill@example.com",
+		count: 67,
+	},
+})
+test(sc, []emailTest{
+	{
+		email: "kaden@example.com",
+		count: 23,
+	},
+	{
+		email: "george@example.com",
+		count: 126,
+	},
+	{
+		email: "kaden@example.com",
+		count: 31,
+	},
+	{
+		email: "george@example.com",
+		count: 100,
+	},
+})
+
+//// Example Generic 2 interface ////
+type biller[C customer] interface {
+	Charge(C) bill
+	Name() string
+}
+
+// don't edit below this line
+
+type userBiller struct {
+	Plan string
+}
+
+func (ub userBiller) Charge(u user) bill {
+	amount := 50.0
+	if ub.Plan == "pro" {
+		amount = 100.0
+	}
+	return bill{
+		Customer: u,
+		Amount:   amount,
+	}
+}
+
+func (sb userBiller) Name() string {
+	return fmt.Sprintf("%s user biller", sb.Plan)
+}
+
+type orgBiller struct {
+	Plan string
+}
+
+func (ob orgBiller) Name() string {
+	return fmt.Sprintf("%s org biller", ob.Plan)
+}
+
+func (ob orgBiller) Charge(o org) bill {
+	amount := 2000.0
+	if ob.Plan == "pro" {
+		amount = 3000.0
+	}
+	return bill{
+		Customer: o,
+		Amount:   amount,
+	}
+}
+
+type customer interface {
+	GetBillingEmail() string
+}
+
+type bill struct {
+	Customer customer
+	Amount   float64
+}
+
+type user struct {
+	UserEmail string
+}
+
+func (u user) GetBillingEmail() string {
+	return u.UserEmail
+}
+
+type org struct {
+	Admin user
+	Name  string
+}
+
+func (o org) GetBillingEmail() string {
+	return o.Admin.GetBillingEmail()
+}
+
+func main() {
+	testBiller[user](
+		userBiller{Plan: "basic"},
+		user{UserEmail: "joe@example.com"},
+	)
+	testBiller[user](
+		userBiller{Plan: "basic"},
+		user{UserEmail: "samuel.boggs@example.com"},
+	)
+	testBiller[user](
+		userBiller{Plan: "pro"},
+		user{UserEmail: "jade.row@example.com"},
+	)
+	testBiller[org](
+		orgBiller{Plan: "basic"},
+		org{Admin: user{UserEmail: "challis.rane@example.com"}},
+	)
+	testBiller[org](
+		orgBiller{Plan: "pro"},
+		org{Admin: user{UserEmail: "challis.rane@example.com"}},
+	)
+}
+
+func testBiller[C customer](b biller[C], c C) {
+	fmt.Printf("Using '%s' to create a bill for '%s'\n", b.Name(), c.GetBillingEmail())
+	bill := b.Charge(c)
+	fmt.Printf("Bill created for %v dollars\n", bill.Amount)
+	fmt.Println(" --- ")
+}
